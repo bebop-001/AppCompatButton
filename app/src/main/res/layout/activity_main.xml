@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    tools:context="com.kana_tutor.buttonshortlongclickdemo.MainActivity">
+
+    <TextView
+        android:id="@+id/short_long_TV"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="3dp"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        />
+
+    <com.kana_tutor.buttonshortlongclickdemo.CustomButton
+        android:id="@+id/button_1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Press Me"
+        custom:onClick="onClick_1"
+        custom:onLongClick="longClick_1"
+        />
+    <com.kana_tutor.buttonshortlongclickdemo.CustomButton
+        android:id="@+id/button_2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Press Me Too"
+        custom:onClick="onClick_2"
+        custom:onLongClick="longClick_2"
+        />
+    <com.kana_tutor.buttonshortlongclickdemo.CustomButton
+        android:id="@+id/button_3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Press Me Free"
+        custom:onClick="onClick_3"
+        custom:onLongClick="longClick_3"
+        />
+
+</LinearLayout>
