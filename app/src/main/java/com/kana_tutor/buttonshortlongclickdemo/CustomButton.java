@@ -1,5 +1,6 @@
 package com.kana_tutor.buttonshortlongclickdemo;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.media.AudioManager;
@@ -7,6 +8,7 @@ import android.support.v7.widget.AppCompatButton;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import java.lang.reflect.Method;
@@ -60,7 +62,7 @@ public class CustomButton extends AppCompatButton {
         audioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.CustomButton);
         final int n = a.getIndexCount();
-        String method = "";
+        String method;
         for (int i = 0; i < n; i++) {
             int attr = a.getIndex(i);
             Log.w(TAG, String.format("button id:0x%04x", attr));
@@ -103,40 +105,56 @@ public class CustomButton extends AppCompatButton {
                 }
             }
         }
+        a.recycle();
     }
     public CustomButton(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         Log.d(TAG, "got here 2.");
     }
 
+    @SuppressLint("SetTextI18n")
     public void onClick_1(View v) {
         TextView tv = (TextView)((View)v.getParent()).findViewById(R.id.short_long_TV);
-        tv.setText(String.format("onClick_1 id = 0x%04x", v.getId()));
+        String buttonText = ((Button)v).getText().toString();
+        tv.setText(buttonText + ":short click");
     }
+    @SuppressLint("SetTextI18n")
     public void onClick_2(View v) {
         TextView tv = (TextView)((View)v.getParent()).findViewById(R.id.short_long_TV);
-        tv.setText(String.format("onClick_2 id = 0x%04x", v.getId()));
+        String buttonText = ((Button)v).getText().toString();
+        tv.setText(buttonText + ":short click");
     }
+    @SuppressLint("SetTextI18n")
     public void onClick_3(View v) {
         TextView tv = (TextView)((View)v.getParent()).findViewById(R.id.short_long_TV);
-        tv.setText(String.format("onClick_3 id = 0x%04x", v.getId()));
+        String buttonText = ((Button)v).getText().toString();
+        tv.setText(buttonText + ":short click");
     }
+    @SuppressLint("SetTextI18n")
+    @SuppressWarnings("SameReturnValue")
     public boolean longClick_1(View v) {
         audioManager.playSoundEffect(AudioManager.FX_KEY_CLICK);
         TextView tv = (TextView)((View)v.getParent()).findViewById(R.id.short_long_TV);
-        tv.setText(String.format("longClick_1 id = 0x%04x", v.getId()));
+        String buttonText = ((Button)v).getText().toString();
+        tv.setText(buttonText + ":long click");
         return true;
     }
+    @SuppressLint("SetTextI18n")
+    @SuppressWarnings("SameReturnValue")
     public boolean longClick_2(View v) {
         audioManager.playSoundEffect(AudioManager.FX_KEY_CLICK);
         TextView tv = (TextView)((View)v.getParent()).findViewById(R.id.short_long_TV);
-        tv.setText(String.format("longClick_2 id = 0x%04x", v.getId()));
+        String buttonText = ((Button)v).getText().toString();
+        tv.setText(buttonText + ":long click");
         return true;
     }
+    @SuppressLint("SetTextI18n")
+    @SuppressWarnings("SameReturnValue")
     public boolean longClick_3(View v) {
         audioManager.playSoundEffect(AudioManager.FX_KEY_CLICK);
         TextView tv = (TextView)((View)v.getParent()).findViewById(R.id.short_long_TV);
-        tv.setText(String.format("longClick_3 id = 0x%04x", v.getId()));
+        String buttonText = ((Button)v).getText().toString();
+        tv.setText(buttonText + ":long click");
         return true;
     }
 }
