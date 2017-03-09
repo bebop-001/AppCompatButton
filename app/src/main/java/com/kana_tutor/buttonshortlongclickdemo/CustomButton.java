@@ -76,18 +76,22 @@ public class CustomButton extends AppCompatButton {
         super(context);
         Log.d(TAG, "got here 0.");
     }
-    public CustomButton(Context context, AttributeSet attrs) throws NoSuchMethodException {
+    public CustomButton(Context context, AttributeSet attrs) throws NoSuchMethodException, ClassNotFoundException {
         super(context, attrs);
         audioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.CustomButton);
         final int n = a.getIndexCount();
-        String[] actNames = null;
+        Class actClass = null;
         try {
             String packageName = context.getApplicationContext().getPackageName();
             PackageManager pm = context.getPackageManager();
             ActivityInfo[] actInfo = pm.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES).activities;
+            String[] actNames = new String[actInfo.length];
             for (int i = 0; i < actNames.length; i++)
                 actNames[i] = actInfo[i].name;
+            if (actNames.length > 1)
+                Log.d(TAG, "WARNING! Expected 1 activity name. Found " + actNames.length);
+            actClass = Class.forName(actNames[0]);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
@@ -99,27 +103,34 @@ public class CustomButton extends AppCompatButton {
             Method method = null;
             if (null != methodName) {
                 // Find a method by the name of "methodName" that expects a view.
-                method = getClass().getMethod(methodName, View.class);
-                Type rType = method.getGenericReturnType();
-                if (methodName.equals("onClick") && ! rType.equals(void.class))
-                    throw new NoSuchMethodException(
-                        "CustomButton: methodName = \""
-                            + methodName + "\":expected return type void: Found "
-                            + rType.toString());
-                else if (methodName.equals("onLongClick") && ! rType.equals(boolean.class))
-                    throw new NoSuchMethodException(
-                        "CustomButton: methodName = \""
-                            + methodName + "\":expected return type boolean: Found "
-                            + rType.toString());
+                try {
+                    method = actClass.getMethod(methodName, View.class);
+                    Type rType = method.getGenericReturnType();
+                    if (methodName.equals("onClick") && ! rType.equals(void.class))
+                        throw new NoSuchMethodException(
+                            "CustomButton: methodName = \""
+                                + methodName + "\":expected return type void: Found "
+                                + rType.toString());
+                    else if (methodName.equals("onLongClick") && ! rType.equals(boolean.class))
+                        throw new NoSuchMethodException(
+                            "CustomButton: methodName = \""
+                                + methodName + "\":expected return type boolean: Found "
+                                + rType.toString());
+                }
+                catch (Exception e) {
+                    Log.d(TAG, "Find method " + methodName
+                            + " in " + actClass.toString() + " FAILED:\n"
+                            + e.getMessage());
+                    throw e;
+                }
+
             }
             if (null != method) {
-                Type rType = method.getGenericReturnType();
                 if (attr == R.styleable.CustomButton_onClick) {
                     setOnClickListener(onClickListener(method, methodName));
                     Log.d(TAG, "button:" + methodName);
                 }
                 else if (attr == R.styleable.CustomButton_onLongClick) {
-                    if (! rType.equals(boolean.class))
                     setOnLongClickListener(onLongClickListener(method, methodName));
                     Log.d(TAG, "button:" + methodName);
                 }
