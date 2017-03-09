@@ -18,6 +18,8 @@ package com.kana_tutor.buttonshortlongclickdemo;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.content.res.TypedArray;
 import android.media.AudioManager;
 import android.support.v7.widget.AppCompatButton;
@@ -79,46 +81,47 @@ public class CustomButton extends AppCompatButton {
         audioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.CustomButton);
         final int n = a.getIndexCount();
-        String method;
+        String[] actNames = null;
+        try {
+            String packageName = context.getApplicationContext().getPackageName();
+            PackageManager pm = context.getPackageManager();
+            ActivityInfo[] actInfo = pm.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES).activities;
+            for (int i = 0; i < actNames.length; i++)
+                actNames[i] = actInfo[i].name;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        String methodName;
         for (int i = 0; i < n; i++) {
             int attr = a.getIndex(i);
             Log.w(TAG, String.format("button id:0x%04x", attr));
-            method = a.getString(attr);
-            Method handler = null;
-            if (null != method) {
-                // Find a method by the name of "method" that expects a view.
-                handler = getClass().getMethod(method, View.class);
-                Type rType = handler.getGenericReturnType();
-                if (method.equals("onClick") && ! rType.equals(void.class))
+            methodName = a.getString(attr);
+            Method method = null;
+            if (null != methodName) {
+                // Find a method by the name of "methodName" that expects a view.
+                method = getClass().getMethod(methodName, View.class);
+                Type rType = method.getGenericReturnType();
+                if (methodName.equals("onClick") && ! rType.equals(void.class))
                     throw new NoSuchMethodException(
-                        "CustomButton: method = \""
-                            + method + "\":expected return type void: Found "
+                        "CustomButton: methodName = \""
+                            + methodName + "\":expected return type void: Found "
                             + rType.toString());
-                else if (method.equals("onLongClick") && ! rType.equals(boolean.class))
+                else if (methodName.equals("onLongClick") && ! rType.equals(boolean.class))
                     throw new NoSuchMethodException(
-                        "CustomButton: method = \""
-                            + method + "\":expected return type boolean: Found "
+                        "CustomButton: methodName = \""
+                            + methodName + "\":expected return type boolean: Found "
                             + rType.toString());
             }
-            if (null != handler) {
-                Type rType = handler.getGenericReturnType();
+            if (null != method) {
+                Type rType = method.getGenericReturnType();
                 if (attr == R.styleable.CustomButton_onClick) {
-                    if (! rType.equals(void.class))
-                        throw new IllegalArgumentException(
-                            "CustomButton: method = \""
-                            + method + "\":expected return type void: Found "
-                            + rType.toString());
-                    setOnClickListener(onClickListener(handler, method));
-                    Log.d(TAG, "button:" + method);
+                    setOnClickListener(onClickListener(method, methodName));
+                    Log.d(TAG, "button:" + methodName);
                 }
                 else if (attr == R.styleable.CustomButton_onLongClick) {
                     if (! rType.equals(boolean.class))
-                        throw new IllegalArgumentException(
-                            "CustomButton: method = \""
-                            + method + "\":expected return type boolean: Found "
-                            + rType.toString());
-                    setOnLongClickListener(onLongClickListener(handler, method));
-                    Log.d(TAG, "button:" + method);
+                    setOnLongClickListener(onLongClickListener(method, methodName));
+                    Log.d(TAG, "button:" + methodName);
                 }
             }
         }
@@ -128,13 +131,14 @@ public class CustomButton extends AppCompatButton {
         super(context, attrs, defStyleAttr);
         Log.d(TAG, "got here 2.");
     }
-
+/*
     @SuppressLint("SetTextI18n")
     public void onClick_1(View v) {
         TextView tv = (TextView)((View)v.getParent()).findViewById(R.id.short_long_TV);
         String buttonText = ((Button)v).getText().toString();
         tv.setText(buttonText + ":short click");
     }
+    */
     @SuppressLint("SetTextI18n")
     public void onClick_2(View v) {
         TextView tv = (TextView)((View)v.getParent()).findViewById(R.id.short_long_TV);
