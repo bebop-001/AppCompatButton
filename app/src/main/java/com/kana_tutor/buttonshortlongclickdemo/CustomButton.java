@@ -18,6 +18,7 @@ package com.kana_tutor.buttonshortlongclickdemo;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.TypedArray;
@@ -47,9 +48,18 @@ public class CustomButton extends AppCompatButton {
         return new OnClickListener() {
             @Override
             public void onClick(View v) {
+                Object receiver = v.getContext();
+                Class declaringClass = method.getDeclaringClass();
+                Class thisClass = CustomButton.this.getClass();
+                if (declaringClass.equals(thisClass)) {
+                    receiver = CustomButton.this;
+                }
+                else if (receiver instanceof ContextWrapper)
+                    receiver = ((ContextWrapper)receiver).getBaseContext();
                 try {
-                    method.invoke(CustomButton.this, v);
-                } catch (Exception e) {
+                    method.invoke(receiver, v);
+                }
+                catch (Exception e) {
                     Log.d(TAG, "Invocation of " + name + " FAILED\nError = \""
                             + e.getMessage() + "\"");
                 }
@@ -61,8 +71,16 @@ public class CustomButton extends AppCompatButton {
             @Override
             public boolean onLongClick(View v) {
                 boolean rv = false;
+                Object receiver = v.getContext();
+                Class declaringClass = method.getDeclaringClass();
+                Class thisClass = CustomButton.this.getClass();
+                if (declaringClass.equals(thisClass)) {
+                    receiver = CustomButton.this;
+                }
+                else if (receiver instanceof ContextWrapper)
+                    receiver = ((ContextWrapper)receiver).getBaseContext();
                 try {
-                    rv = (boolean) method.invoke(CustomButton.this, v);
+                    rv = (boolean) method.invoke(receiver, v);
                 }
                 catch (Exception e) {
                     Log.d(TAG, "Invocation of " + name + " FAILED\nError = \""
@@ -81,7 +99,7 @@ public class CustomButton extends AppCompatButton {
         audioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.CustomButton);
         final int n = a.getIndexCount();
-        Class actClass = null;
+        Class [] actClass = new Class[2];
         try {
             String packageName = context.getApplicationContext().getPackageName();
             PackageManager pm = context.getPackageManager();
@@ -91,10 +109,11 @@ public class CustomButton extends AppCompatButton {
                 actNames[i] = actInfo[i].name;
             if (actNames.length > 1)
                 Log.d(TAG, "WARNING! Expected 1 activity name. Found " + actNames.length);
-            actClass = Class.forName(actNames[0]);
+            actClass[0] = Class.forName(actNames[0]);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
+        actClass[1] = this.getClass();
         String methodName;
         for (int i = 0; i < n; i++) {
             int attr = a.getIndex(i);
@@ -104,7 +123,19 @@ public class CustomButton extends AppCompatButton {
             if (null != methodName) {
                 // Find a method by the name of "methodName" that expects a view.
                 try {
-                    method = actClass.getMethod(methodName, View.class);
+                    for (int j = 0; j < actClass.length; j++) {
+                        try {
+                            method = actClass[j].getMethod(methodName, View.class);
+                            break;
+                        }
+                        catch (NoSuchMethodException e) {
+                            if (actClass.length - 1 == j) {
+                                String mess = "Failed to find method match for " + methodName
+                                        + "\n" + e.getMessage();
+                                throw new NoSuchMethodException(mess);
+                            }
+                        }
+                    }
                     Type rType = method.getGenericReturnType();
                     if (methodName.equals("onClick") && ! rType.equals(void.class))
                         throw new NoSuchMethodException(
@@ -123,7 +154,6 @@ public class CustomButton extends AppCompatButton {
                             + e.getMessage());
                     throw e;
                 }
-
             }
             if (null != method) {
                 if (attr == R.styleable.CustomButton_onClick) {
@@ -142,47 +172,9 @@ public class CustomButton extends AppCompatButton {
         super(context, attrs, defStyleAttr);
         Log.d(TAG, "got here 2.");
     }
-/*
-    @SuppressLint("SetTextI18n")
-    public void onClick_1(View v) {
-        TextView tv = (TextView)((View)v.getParent()).findViewById(R.id.short_long_TV);
-        String buttonText = ((Button)v).getText().toString();
-        tv.setText(buttonText + ":short click");
-    }
-    */
-    @SuppressLint("SetTextI18n")
-    public void onClick_2(View v) {
-        TextView tv = (TextView)((View)v.getParent()).findViewById(R.id.short_long_TV);
-        String buttonText = ((Button)v).getText().toString();
-        tv.setText(buttonText + ":short click");
-    }
-    @SuppressLint("SetTextI18n")
-    public void onClick_3(View v) {
-        TextView tv = (TextView)((View)v.getParent()).findViewById(R.id.short_long_TV);
-        String buttonText = ((Button)v).getText().toString();
-        tv.setText(buttonText + ":short click");
-    }
     @SuppressLint("SetTextI18n")
     @SuppressWarnings("SameReturnValue")
     public boolean longClick_1(View v) {
-        audioManager.playSoundEffect(AudioManager.FX_KEY_CLICK);
-        TextView tv = (TextView)((View)v.getParent()).findViewById(R.id.short_long_TV);
-        String buttonText = ((Button)v).getText().toString();
-        tv.setText(buttonText + ":long click");
-        return true;
-    }
-    @SuppressLint("SetTextI18n")
-    @SuppressWarnings("SameReturnValue")
-    public boolean longClick_2(View v) {
-        audioManager.playSoundEffect(AudioManager.FX_KEY_CLICK);
-        TextView tv = (TextView)((View)v.getParent()).findViewById(R.id.short_long_TV);
-        String buttonText = ((Button)v).getText().toString();
-        tv.setText(buttonText + ":long click");
-        return true;
-    }
-    @SuppressLint("SetTextI18n")
-    @SuppressWarnings("SameReturnValue")
-    public boolean longClick_3(View v) {
         audioManager.playSoundEffect(AudioManager.FX_KEY_CLICK);
         TextView tv = (TextView)((View)v.getParent()).findViewById(R.id.short_long_TV);
         String buttonText = ((Button)v).getText().toString();

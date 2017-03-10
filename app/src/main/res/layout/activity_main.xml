@@ -8,6 +8,16 @@
     tools:context="com.kana_tutor.buttonshortlongclickdemo.MainActivity">
 
     <TextView
+        android:id="@+id/activity_name_TV"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="3dp"
+        android:text="--"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        />
+    <TextView
         android:id="@+id/short_long_TV"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -39,6 +49,13 @@
         android:text="Press Me Free"
         custom:onClick="onClick_3"
         custom:onLongClick="longClick_3"
+        tools:ignore="HardcodedText" />
+    <Button
+        android:id="@+id/other_activity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Select other activity"
+        android:onClick="onClickChangeActivity"
         tools:ignore="HardcodedText" />
 
 </LinearLayout>

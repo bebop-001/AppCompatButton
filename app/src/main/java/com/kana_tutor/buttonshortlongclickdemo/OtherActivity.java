@@ -26,10 +26,12 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity {
+public class OtherActivity extends AppCompatActivity {
     @SuppressWarnings("unused")
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "OtherActivity";
     private static AudioManager audioManager;
+    public static  Context c;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,12 +47,12 @@ public class MainActivity extends AppCompatActivity {
         TextView activityTV = (TextView)findViewById(R.id.activity_name_TV);
         activityTV.setText(activityName);
         Button selectActivity = (Button)findViewById(R.id.other_activity);
-        selectActivity.setText("Select \"Other\" Activity");
+        selectActivity.setText("Select \"Maingit st\" Activity");
     }
 
     @SuppressLint("SetTextI18n")
     public void onClickChangeActivity(View v) {
-        Intent i = new Intent(this, OtherActivity.class);
+        Intent i = new Intent(this, MainActivity.class);
         startActivity(i);
     }
     @SuppressLint("SetTextI18n")
