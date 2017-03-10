@@ -47,7 +47,7 @@ public class OtherActivity extends AppCompatActivity {
         TextView activityTV = (TextView)findViewById(R.id.activity_name_TV);
         activityTV.setText(activityName);
         Button selectActivity = (Button)findViewById(R.id.other_activity);
-        selectActivity.setText("Select \"Maingit st\" Activity");
+        selectActivity.setText("Select \"Main\" Activity");
     }
 
     @SuppressLint("SetTextI18n")
