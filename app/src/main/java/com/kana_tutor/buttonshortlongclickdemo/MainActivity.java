@@ -73,6 +73,15 @@ public class MainActivity extends AppCompatActivity {
     }
     @SuppressLint("SetTextI18n")
     @SuppressWarnings("SameReturnValue")
+    public boolean longClick_1(View v) {
+        audioManager.playSoundEffect(AudioManager.FX_KEY_CLICK);
+        TextView tv = (TextView)((View)v.getParent()).findViewById(R.id.short_long_TV);
+        String buttonText = ((Button)v).getText().toString();
+        tv.setText(buttonText + ":long click");
+        return true;
+    }
+    @SuppressLint("SetTextI18n")
+    @SuppressWarnings("SameReturnValue")
     public boolean longClick_2(View v) {
         audioManager.playSoundEffect(AudioManager.FX_KEY_CLICK);
         TextView tv = (TextView)((View)v.getParent()).findViewById(R.id.short_long_TV);

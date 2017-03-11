@@ -17,10 +17,12 @@
 package com.kana_tutor.buttonshortlongclickdemo;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.media.AudioManager;
 import android.support.v7.widget.AppCompatButton;
@@ -32,6 +34,7 @@ import android.widget.TextView;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 
 
 /*
@@ -40,55 +43,72 @@ import java.lang.reflect.Type;
  * http://kevindion.com/2011/01/custom-xml-attributes-for-android-widgets/
  */
 
-public class CustomButton extends AppCompatButton {
+public class CustomButton extends AppCompatButton
+        implements View.OnClickListener, View.OnLongClickListener {
     private static final String TAG = "KanaButton";
     private static AudioManager audioManager;
 
-    private OnClickListener onClickListener(final Method method, final String name) {
-        return new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Object receiver = v.getContext();
-                Class declaringClass = method.getDeclaringClass();
-                Class thisClass = CustomButton.this.getClass();
-                if (declaringClass.equals(thisClass)) {
-                    receiver = CustomButton.this;
-                }
-                else if (receiver instanceof ContextWrapper)
-                    receiver = ((ContextWrapper)receiver).getBaseContext();
-                try {
-                    method.invoke(receiver, v);
-                }
-                catch (Exception e) {
-                    Log.d(TAG, "Invocation of " + name + " FAILED\nError = \""
-                            + e.getMessage() + "\"");
+    static class ClickHandler {
+        static final ArrayList<ClickHandler> handlers = new ArrayList<>();
+        String type, activityName; int buttonId; Method method;
+        ClickHandler (String type, String activityName, int buttonId, Method method) {
+            this.type = type; this.activityName = activityName;
+            this.buttonId = buttonId; this.method = method;
+            handlers.add(this);
+        }
+        static Method getHandler(String type, String activityName, int buttonId) {
+            Method rv = null;
+            for (ClickHandler c : handlers) {
+                if (c.activityName.equals(activityName) &&c.type.equals(type)
+                        && c.buttonId == buttonId) {
+                    rv = c.method;
+                    break;
                 }
             }
-        };
+            return rv;
+        }
+        public String toString() {
+            return String.format("ClickHandler:type=\"%s\", id=0x%04x,activity=%s",
+                    this.type, this.buttonId, this.activityName);
+        }
     }
-    private OnLongClickListener onLongClickListener(final Method method, final String name) {
-        return new OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                boolean rv = false;
-                Object receiver = v.getContext();
-                Class declaringClass = method.getDeclaringClass();
-                Class thisClass = CustomButton.this.getClass();
-                if (declaringClass.equals(thisClass)) {
-                    receiver = CustomButton.this;
-                }
-                else if (receiver instanceof ContextWrapper)
-                    receiver = ((ContextWrapper)receiver).getBaseContext();
-                try {
-                    rv = (boolean) method.invoke(receiver, v);
-                }
-                catch (Exception e) {
-                    Log.d(TAG, "Invocation of " + name + " FAILED\nError = \""
-                            + e.getMessage() + "\"");
-                }
-                return rv;
-            }
-        };
+    boolean clickHandler( String type, View v) {
+        boolean rv = false;
+        int buttonId = v.getId();
+        Object receiver = v.getContext();
+        if (receiver instanceof ContextWrapper) {
+            receiver = ((ContextWrapper)receiver).getBaseContext();
+        }
+        String actName = ((Activity)receiver).getClass().getSimpleName();
+        Method handler = ClickHandler.getHandler(type, actName, buttonId);
+        if (handler == null) {
+            throw new RuntimeException (String.format(
+                    "CustomButton:%s:activity=\"%s\", no handler found for 0x%04x"
+                    , type, actName, buttonId));
+        }
+        try {
+            if (type.equals("onClick"))
+                handler.invoke(receiver, v);
+            else
+                rv = (boolean) handler.invoke(receiver, v);
+        }
+        catch (Exception e) {
+            throw new RuntimeException(String.format(
+                    "CustomButton:%s: id=%04x, activity=\"%s\" invoke FAILED:\n+%s"
+                    , type, buttonId, actName, receiver.toString(), e.getMessage())
+            );
+        }
+        return rv;
+    }
+    @Override
+    public void onClick(View v) {
+        clickHandler("onClick", v);
+    }
+    @Override
+    public boolean onLongClick(View v) {
+        boolean rv = clickHandler("onLongClick", v);
+        audioManager.playSoundEffect(AudioManager.FX_KEY_CLICK);
+        return rv;
     }
     public CustomButton(Context context) {
         super(context);
@@ -99,34 +119,41 @@ public class CustomButton extends AppCompatButton {
         audioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.CustomButton);
         final int n = a.getIndexCount();
-        Class [] actClass = new Class[2];
+        int buttonId = this.getId();
+        Class [] actClass = new Class[n];
+        String[] actNames = new String[n];
         try {
             String packageName = context.getApplicationContext().getPackageName();
             PackageManager pm = context.getPackageManager();
-            ActivityInfo[] actInfo = pm.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES).activities;
-            String[] actNames = new String[actInfo.length];
-            for (int i = 0; i < actNames.length; i++)
-                actNames[i] = actInfo[i].name;
-            if (actNames.length > 1)
-                Log.d(TAG, "WARNING! Expected 1 activity name. Found " + actNames.length);
-            actClass[0] = Class.forName(actNames[0]);
+            ActivityInfo[] actInfo = pm.getPackageInfo(
+                    packageName, PackageManager.GET_ACTIVITIES).activities;
+            for (int i = 0; i < n; i++) {
+                actClass[i] = Class.forName(actInfo[i].name);
+                actNames[i] = actClass[i].getSimpleName();
+            }
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
-        actClass[1] = this.getClass();
-        String methodName;
         for (int i = 0; i < n; i++) {
             int attr = a.getIndex(i);
             Log.w(TAG, String.format("button id:0x%04x", attr));
-            methodName = a.getString(attr);
-            Method method = null;
-            if (null != methodName) {
+            String methodType = ((R.styleable.CustomButton_onClick == attr)
+                ? "onClick"
+                : ((R.styleable.CustomButton_onLongClick == attr)
+                    ? "onLongClick"
+                    : null
+                )
+            );
+            if (null != methodType) {
+                String methodName = a.getString(attr);
+                int id = a.getResourceId(i, 666);
+                Resources r = a.getResources();
+                Method method = null;
                 // Find a method by the name of "methodName" that expects a view.
                 try {
                     for (int j = 0; j < actClass.length; j++) {
                         try {
                             method = actClass[j].getMethod(methodName, View.class);
-                            break;
                         }
                         catch (NoSuchMethodException e) {
                             if (actClass.length - 1 == j) {
@@ -135,34 +162,34 @@ public class CustomButton extends AppCompatButton {
                                 throw new NoSuchMethodException(mess);
                             }
                         }
+                        Type rType = method.getGenericReturnType();
+                        // Make sure the return on the caller supplied
+                        // value is correct.
+                        if (methodType.equals("onClick") && ! rType.equals(void.class))
+                            throw new NoSuchMethodException(
+                                "CustomButton: methodName = \""
+                                    + methodName + "\":expected return type void: Found "
+                                    + rType.toString());
+                        else if (methodType.equals("onLongClick") && ! rType.equals(boolean.class))
+                            throw new NoSuchMethodException(
+                                "CustomButton: methodName = \""
+                                    + methodName + "\":expected return type boolean: Found "
+                                    + rType.toString());
+                        // We overoad OnClickListener and OnLongClickListener.
+                        // setOnClick associates our OnClickListener's with our
+                        // class so our onClick listners will get called.
+                        if (methodType.equals("onClick"))
+                            setOnClickListener(this);
+                        else
+                            setOnLongClickListener(this);
+                        Log.d(TAG, new ClickHandler(methodType, actNames[j], buttonId, method).toString());
                     }
-                    Type rType = method.getGenericReturnType();
-                    if (methodName.equals("onClick") && ! rType.equals(void.class))
-                        throw new NoSuchMethodException(
-                            "CustomButton: methodName = \""
-                                + methodName + "\":expected return type void: Found "
-                                + rType.toString());
-                    else if (methodName.equals("onLongClick") && ! rType.equals(boolean.class))
-                        throw new NoSuchMethodException(
-                            "CustomButton: methodName = \""
-                                + methodName + "\":expected return type boolean: Found "
-                                + rType.toString());
                 }
                 catch (Exception e) {
                     Log.d(TAG, "Find method " + methodName
                             + " in " + actClass.toString() + " FAILED:\n"
                             + e.getMessage());
                     throw e;
-                }
-            }
-            if (null != method) {
-                if (attr == R.styleable.CustomButton_onClick) {
-                    setOnClickListener(onClickListener(method, methodName));
-                    Log.d(TAG, "button:" + methodName);
-                }
-                else if (attr == R.styleable.CustomButton_onLongClick) {
-                    setOnLongClickListener(onLongClickListener(method, methodName));
-                    Log.d(TAG, "button:" + methodName);
                 }
             }
         }
