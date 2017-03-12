@@ -21,9 +21,11 @@
         <activity
             android:name=".OtherActivity"
             android:label="@string/title_activity_other"
-            >
-
-        </activity>
+            />
+        <activity
+            android:name=".FragActivity"
+            android:label="@string/title_activity_frag"
+            />
     </application>
 
 </manifest>

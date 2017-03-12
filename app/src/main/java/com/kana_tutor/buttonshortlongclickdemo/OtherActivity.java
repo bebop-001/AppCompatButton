@@ -43,16 +43,18 @@ public class OtherActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        View rootView = findViewById(R.id.root_view);
+        rootView.setBackgroundColor(0xffa5d6a7);
         String activityName = this.getClass().getSimpleName();
         TextView activityTV = (TextView)findViewById(R.id.activity_name_TV);
         activityTV.setText(activityName);
-        Button selectActivity = (Button)findViewById(R.id.other_activity);
-        selectActivity.setText("Select \"Main\" Activity");
+        Button selectActivity = (Button)findViewById(R.id.change_activity);
+        selectActivity.setText("Select \"Fragment\" Activity");
     }
 
     @SuppressLint("SetTextI18n")
     public void onClickChangeActivity(View v) {
-        Intent i = new Intent(this, MainActivity.class);
+        Intent i = new Intent(this, FragActivity.class);
         startActivity(i);
     }
     @SuppressLint("SetTextI18n")

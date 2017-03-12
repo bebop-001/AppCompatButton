@@ -41,10 +41,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        View rootView = findViewById(R.id.root_view);
+        rootView.setBackgroundColor(0xffb3e5fc);
         String activityName = this.getClass().getSimpleName();
         TextView activityTV = (TextView)findViewById(R.id.activity_name_TV);
         activityTV.setText(activityName);
-        Button selectActivity = (Button)findViewById(R.id.other_activity);
+        Button selectActivity = (Button)findViewById(R.id.change_activity);
         selectActivity.setText("Select \"Other\" Activity");
     }
 
