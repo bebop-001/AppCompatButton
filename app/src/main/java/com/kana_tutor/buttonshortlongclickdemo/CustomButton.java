@@ -19,8 +19,6 @@ package com.kana_tutor.buttonshortlongclickdemo;
 import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
-import android.content.pm.ActivityInfo;
-import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.media.AudioManager;
@@ -136,41 +134,28 @@ public class CustomButton extends AppCompatButton
     public CustomButton(Context context, AttributeSet attrs)
             throws NoSuchMethodException, ClassNotFoundException {
         super(context, attrs);
-        // used so LongClick has key clicks just like onClick.
-        audioManager = (AudioManager)context
-            .getSystemService(Context.AUDIO_SERVICE);
-        TypedArray typedArray = context
-            .obtainStyledAttributes(attrs, R.styleable.CustomButton);
+        Activity act = (Activity)context;
+        Class actClass = context.getClass();
+        String actName = actClass.getSimpleName();
         // Id of the button we're configuring.  This is the same as
         // the view id passed into the button callback and is used
         // to tie things together.
         int buttonId = this.getId();
 
+        Log.d(TAG, String.format("constructor: activity: %s, id = 0x%08x"
+                , actName, buttonId));
+        // used so LongClick has key clicks just like onClick.
+        audioManager = (AudioManager)context
+            .getSystemService(Context.AUDIO_SERVICE);
+        TypedArray customButtonAttrs = context
+            .obtainStyledAttributes(attrs, R.styleable.CustomButton);
+
         // when building our handler, we need it's class.  This is
         // actually part of the handler when its constructed.  Activity
         // short name is used when the callback is called so we
-        final int typedArrayCount = typedArray.getIndexCount();
-        Class [] actClass = null;
-        String[] actNames = null;
-        try {
-            String packageName = context.getApplicationContext()
-                .getPackageName();
-            PackageManager pm = context.getPackageManager();
-            ActivityInfo[] actInfo = pm.getPackageInfo(
-                    packageName, PackageManager.GET_ACTIVITIES).activities;
-            actClass = new Class[actInfo.length];
-            actNames = new String[actInfo.length];
-
-            for (int i = 0; i < actInfo.length; i++) {
-                String name = actInfo[i].name;
-                actClass[i] = Class.forName(name);
-                actNames[i] = actClass[i].getSimpleName();
-            }
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
-        for (int i = 0; i < typedArrayCount; i++) {
-            int attrId = typedArray.getIndex(i);
+        final int buttonAttrCount = customButtonAttrs.getIndexCount();
+        for (int i = 0; i < buttonAttrCount; i++) {
+            int attrId = customButtonAttrs.getIndex(i);
             Log.w(TAG, String.format("button id:0x%04x", attrId));
             String methodType = ((R.styleable.CustomButton_onClick == attrId)
                 ? "onClick"
@@ -180,68 +165,62 @@ public class CustomButton extends AppCompatButton
                 )
             );
             if (null != methodType) {
-                String methodName = typedArray.getString(attrId);
-                int id = typedArray.getResourceId(i, 666);
-                Resources r = typedArray.getResources();
+                String methodName = customButtonAttrs.getString(attrId);
+                Resources r = customButtonAttrs.getResources();
                 // Find a method by the name of "methodName" that expects a view.
                 try {
-                    for (int j = 0; j < actClass.length; j++) {
-                        Method method = null;
-                        // search for the method in all the possible
-                        // classes.  It will exist in at least one but
-                        // may not be in all.  If it's not found,
-                        // print a warning and move on.
-                        try {
-                            method = actClass[j]
-                                .getMethod(methodName, View.class);
-                        }
-                        catch (NoSuchMethodException e) {
-                            if (actClass.length - 1 == j) {
-                                String mess
-                                    = "Failed to find method match for "
-                                        + methodName + "\n" + e.getMessage();
-                            }
-                        }
-                        // No match, try the next class.
-                        if (null == method)
-                            continue;
-                        Type rType = method.getGenericReturnType();
-                        // Make sure the return on the caller supplied
-                        // value is correct.
-                        if (methodType.equals("onClick")
-                                && ! rType.equals(void.class))
-                            throw new NoSuchMethodException(
-                                "CustomButton: methodName = \"" + methodName
-                                + "\":expected return type void: Found "
-                                + rType.toString());
-                        else if (methodType.equals("onLongClick")
-                                && ! rType.equals(boolean.class))
-                            throw new NoSuchMethodException(
-                                "CustomButton: methodName = \"" + methodName
-                                + "\":expected return type boolean: Found "
-                                + rType.toString());
-                        // We overload OnClickListener and OnLongClickListener.
-                        // setOnClick associates our OnClickListener's with our
-                        // class so our onClick listeners will get called.
-                        if (methodType.equals("onClick"))
-                            setOnClickListener(this);
-                        else
-                            setOnLongClickListener(this);
-                        Log.d(TAG,
-                            new HandlerData(
-                                methodType, actNames[j], buttonId, method
-                            ).toString());
+                    Method method = null;
+                    // search for the method in all the possible
+                    // classes.  It will exist in at least one but
+                    // may not be in all.  If it's not found,
+                    // print a warning and move on.
+                    try {
+                        method = actClass
+                            .getMethod(methodName, View.class);
                     }
+                    catch (NoSuchMethodException e) {
+                        Log.d(TAG, String.format(
+                            "Failed to find method \"%s\" "
+                            + "in activity \"%s\"\nError:%s",
+                            methodName, actName, e.getMessage()));
+                        continue;
+                    }
+                    Type rType = method.getGenericReturnType();
+                    // Make sure the return on the caller supplied
+                    // value is correct.
+                    if (methodType.equals("onClick")
+                            && ! rType.equals(void.class))
+                        throw new NoSuchMethodException(
+                            "CustomButton: methodName = \"" + methodName
+                            + "\":expected return type void: Found "
+                            + rType.toString());
+                    else if (methodType.equals("onLongClick")
+                            && ! rType.equals(boolean.class))
+                        throw new NoSuchMethodException(
+                            "CustomButton: methodName = \"" + methodName
+                            + "\":expected return type boolean: Found "
+                            + rType.toString());
+                    // We overload OnClickListener and OnLongClickListener.
+                    // setOnClick associates our OnClickListener's with our
+                    // class so our onClick listeners will get called.
+                    if (methodType.equals("onClick"))
+                        setOnClickListener(this);
+                    else
+                        setOnLongClickListener(this);
+                    Log.d(TAG,
+                        new HandlerData(
+                            methodType, actName, buttonId, method
+                        ).toString());
                 }
                 catch (Exception e) {
                     Log.d(TAG, "Find method " + methodName
-                            + " in " + actClass.toString() + " FAILED:\n"
+                            + " in " + actName + " FAILED:\n"
                             + e.getMessage());
                     throw e;
                 }
             }
         }
-        typedArray.recycle();
+        customButtonAttrs.recycle();
     }
     public CustomButton(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
