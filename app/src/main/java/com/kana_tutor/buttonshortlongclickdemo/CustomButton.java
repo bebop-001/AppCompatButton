@@ -139,7 +139,7 @@ public class CustomButton extends AppCompatButton
         // used so LongClick has key clicks just like onClick.
         audioManager = (AudioManager)context
             .getSystemService(Context.AUDIO_SERVICE);
-        TypedArray a = context
+        TypedArray typedArray = context
             .obtainStyledAttributes(attrs, R.styleable.CustomButton);
         // Id of the button we're configuring.  This is the same as
         // the view id passed into the button callback and is used
@@ -149,24 +149,28 @@ public class CustomButton extends AppCompatButton
         // when building our handler, we need it's class.  This is
         // actually part of the handler when its constructed.  Activity
         // short name is used when the callback is called so we
-        final int n = a.getIndexCount();
-        Class [] actClass = new Class[n];
-        String[] actNames = new String[n];
+        final int typedArrayCount = typedArray.getIndexCount();
+        Class [] actClass = null;
+        String[] actNames = null;
         try {
             String packageName = context.getApplicationContext()
                 .getPackageName();
             PackageManager pm = context.getPackageManager();
             ActivityInfo[] actInfo = pm.getPackageInfo(
                     packageName, PackageManager.GET_ACTIVITIES).activities;
-            for (int i = 0; i < n; i++) {
-                actClass[i] = Class.forName(actInfo[i].name);
+            actClass = new Class[actInfo.length];
+            actNames = new String[actInfo.length];
+
+            for (int i = 0; i < actInfo.length; i++) {
+                String name = actInfo[i].name;
+                actClass[i] = Class.forName(name);
                 actNames[i] = actClass[i].getSimpleName();
             }
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
-        for (int i = 0; i < n; i++) {
-            int attrId = a.getIndex(i);
+        for (int i = 0; i < typedArrayCount; i++) {
+            int attrId = typedArray.getIndex(i);
             Log.w(TAG, String.format("button id:0x%04x", attrId));
             String methodType = ((R.styleable.CustomButton_onClick == attrId)
                 ? "onClick"
@@ -176,9 +180,9 @@ public class CustomButton extends AppCompatButton
                 )
             );
             if (null != methodType) {
-                String methodName = a.getString(attrId);
-                int id = a.getResourceId(i, 666);
-                Resources r = a.getResources();
+                String methodName = typedArray.getString(attrId);
+                int id = typedArray.getResourceId(i, 666);
+                Resources r = typedArray.getResources();
                 // Find a method by the name of "methodName" that expects a view.
                 try {
                     for (int j = 0; j < actClass.length; j++) {
@@ -237,7 +241,7 @@ public class CustomButton extends AppCompatButton
                 }
             }
         }
-        a.recycle();
+        typedArray.recycle();
     }
     public CustomButton(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);

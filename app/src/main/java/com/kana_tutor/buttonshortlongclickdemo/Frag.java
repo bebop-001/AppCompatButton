@@ -17,7 +17,6 @@ public class Frag extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View frag = inflater.inflate(R.layout.activity_main, container, false);
-        frag.setBackgroundColor(0xff7043);
         return frag;
     }
 }

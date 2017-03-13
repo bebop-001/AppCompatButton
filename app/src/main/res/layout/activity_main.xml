@@ -21,7 +21,7 @@
         />
     <TextView
         android:id="@+id/short_long_TV"
-        android:background="@android:color/background_light"
+        android:background="#80ffffff"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="3dp"
@@ -35,14 +35,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="3dp"
-        android:background="@android:color/background_light"
+        android:background="#80ffffff"
         android:text="Press Me"
         custom:onClick="onClick_1"
         custom:onLongClick="longClick_1"
         tools:ignore="HardcodedText" />
     <com.kana_tutor.buttonshortlongclickdemo.CustomButton
         android:id="@+id/button_2"
-        android:background="@android:color/background_light"
+        android:background="#80ffffff"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="3dp"
@@ -52,7 +52,7 @@
         tools:ignore="HardcodedText" />
     <com.kana_tutor.buttonshortlongclickdemo.CustomButton
         android:id="@+id/button_3"
-        android:background="@android:color/background_light"
+        android:background="#80ffffff"
         android:layout_margin="3dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -62,7 +62,7 @@
         tools:ignore="HardcodedText" />
     <Button
         android:id="@+id/change_activity"
-        android:background="@android:color/background_light"
+        android:background="#80ffffff"
         android:layout_margin="3dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
