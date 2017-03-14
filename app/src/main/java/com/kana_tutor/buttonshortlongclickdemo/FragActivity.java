@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+@SuppressWarnings("unused")
 public class FragActivity extends AppCompatActivity {
     private static final String TAG = "FragActivity";
     private static AudioManager audioManager;
@@ -34,6 +35,7 @@ public class FragActivity extends AppCompatActivity {
 
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onResume() {
         super.onResume();

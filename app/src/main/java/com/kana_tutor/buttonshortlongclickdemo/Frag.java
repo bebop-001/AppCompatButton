@@ -16,7 +16,6 @@ public class Frag extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View frag = inflater.inflate(R.layout.activity_main, container, false);
-        return frag;
+        return inflater.inflate(R.layout.activity_main, container, false);
     }
 }

@@ -26,11 +26,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+@SuppressWarnings("unused")
 public class OtherActivity extends AppCompatActivity {
     @SuppressWarnings("unused")
     private static final String TAG = "OtherActivity";
     private static AudioManager audioManager;
-    public static  Context c;
 
 
     @Override
@@ -40,6 +40,7 @@ public class OtherActivity extends AppCompatActivity {
         audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onResume() {
         super.onResume();
