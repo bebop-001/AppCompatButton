@@ -34,29 +34,51 @@ import java.lang.reflect.Type;
  * these pages guided me in developing this code.
  * http://stackoverflow.com/questions/5706038/long-press-definition-at-xml-layout-like-androidonclick-does
  * http://kevindion.com/2011/01/custom-xml-attributes-for-android-widgets/
+ *
+ * Custom XML attributes documented at:
+ *  https://developer.android.com/training/custom-views/create-view.html
+ * Interesting article on custom UI in
+ *  http://kevindion.com/2010/12/android-odometer-ui-tutorial-part-1/
  */
+// :!grep -w OnClickListener `find /home/sjs/Android/Sdk/sources/android-25/ -type f -name \*.java` | grep implements
 
 public class CustomButton extends AppCompatButton {
     private static final String TAG = "KanaButton";
     private static AudioManager audioManager;
 
+    // click types.
+    private static final String SHORT_CLICK = "onClick";
+    private static final String LONG_CLICK = "onLongClick";
+
+    private boolean clickListener(
+            final String type, final Method m, final View v) {
+        boolean rv = false;
+        Object receiver = v.getContext();
+        if (receiver instanceof ContextWrapper) {
+            receiver = ((ContextWrapper)receiver)
+                .getBaseContext();
+        }
+        //noinspection TryWithIdenticalCatches
+        try {
+            if (type.equals(SHORT_CLICK)) {
+                m.invoke(receiver, v);
+            }
+            else {
+                audioManager.playSoundEffect(AudioManager.FX_KEY_CLICK);
+                rv = (boolean)m.invoke(receiver, v);
+            }
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+        return rv;
+    }
     private OnClickListener getOnClickListener (final Method method) {
         return new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Object receiver = v.getContext();
-                if (receiver instanceof ContextWrapper) {
-                    receiver = ((ContextWrapper)receiver)
-                        .getBaseContext();
-                }
-                //noinspection TryWithIdenticalCatches
-                try {
-                    method.invoke(receiver, v);
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                } catch (InvocationTargetException e) {
-                    e.printStackTrace();
-                }
+                clickListener(SHORT_CLICK, method, v);
             }
         };
     }
@@ -66,21 +88,7 @@ public class CustomButton extends AppCompatButton {
             @SuppressWarnings("TryWithIdenticalCatches")
             @Override
             public boolean onLongClick(View v) {
-                boolean rv = false;
-                Object receiver = v.getContext();
-                if (receiver instanceof ContextWrapper) {
-                    receiver = ((ContextWrapper)receiver)
-                        .getBaseContext();
-                }
-                try {
-                    audioManager.playSoundEffect(AudioManager.FX_KEY_CLICK);
-                    rv = (boolean) method.invoke(receiver, v);
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                } catch (InvocationTargetException e) {
-                    e.printStackTrace();
-                }
-                return rv;
+                return clickListener(LONG_CLICK, method, v);
             }
         };
     }
@@ -118,16 +126,20 @@ public class CustomButton extends AppCompatButton {
             int attrId = customButtonAttrs.getIndex(i);
             Log.w(TAG, String.format("button id:0x%04x", buttonId));
             String methodType;
+            // See attrs.xml.  We support onClick and onLongClick
+            // method types.
             if (R.styleable.CustomButton_onClick == attrId)
-                methodType = "onClick";
+                methodType = SHORT_CLICK;
             else if (R.styleable.CustomButton_onLongClick == attrId)
-                methodType = "onLongClick";
+                methodType = LONG_CLICK;
             else throw new NoSuchMethodException(
                 String.format(
                     "Unrecognized CustomButton attribute. id=0x%08x"
                     , attrId
                 )
             );
+            // From layout file. eg: custom:onClick="methodName" where
+            // methodName is the name of the method to call.
             String methodName = customButtonAttrs.getString(attrId);
             Method method;
             try {
@@ -136,22 +148,21 @@ public class CustomButton extends AppCompatButton {
                     .getMethod(methodName, View.class);
             }
             catch (NoSuchMethodException e) {
-                Log.d(TAG, String.format(
+                throw new NoSuchMethodException (String.format(
                     "Failed to find method \"%s\" "
                     + "in activity \"%s\"\nError:%s",
                     methodName, actName, e.getMessage()));
-                continue;
             }
             Type rType = method.getGenericReturnType();
             // Make sure the return on the caller supplied
-            // value is correct.
-            if (methodType.equals("onClick")
+            // method is correct.
+            if (methodType.equals(SHORT_CLICK)
                     && ! rType.equals(void.class))
                 throw new NoSuchMethodException(
                     "CustomButton: methodName = \"" + methodName
                     + "\":expected return type void: Found "
                     + rType.toString());
-            else if (methodType.equals("onLongClick")
+            else if (methodType.equals(LONG_CLICK)
                     && ! rType.equals(boolean.class))
                 throw new NoSuchMethodException(
                     "CustomButton: methodName = \"" + methodName
@@ -160,7 +171,7 @@ public class CustomButton extends AppCompatButton {
             // We overload OnClickListener and OnLongClickListener.
             // setOnClick associates our OnClickListener's with our
             // class so our onClick listeners will get called.
-            if (methodType.equals("onClick")) {
+            if (methodType.equals(SHORT_CLICK)) {
                 Log.w(TAG, String.format("onClick id:0x%04x", buttonId));
                 setOnClickListener(getOnClickListener(method));
             }
