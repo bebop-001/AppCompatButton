@@ -1,5 +1,12 @@
 apply plugin: 'com.android.library'
-
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.3.0'
+    }
+}
 android {
     compileSdkVersion 25
     buildToolsVersion "25.0.1"

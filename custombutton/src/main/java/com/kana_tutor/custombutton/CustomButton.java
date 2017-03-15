@@ -16,6 +16,7 @@
  */
 package com.kana_tutor.custombutton;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.res.TypedArray;
@@ -41,9 +42,10 @@ import java.util.HashMap;
  * Interesting article on custom UI in
  *  http://kevindion.com/2010/12/android-odometer-ui-tutorial-part-1/
  */
-// :!grep -w OnClickListener `find /home/sjs/Android/Sdk/sources/android-25/ -type f -name \*.java` | grep implements
 
-public class CustomButton extends AppCompatButton {
+public class CustomButton
+        extends AppCompatButton
+        implements View.OnClickListener, View.OnLongClickListener {
     private static final String TAG = "KanaButton";
     private static AudioManager audioManager;
 
@@ -51,22 +53,33 @@ public class CustomButton extends AppCompatButton {
     private static final String SHORT_CLICK = "onClick";
     private static final String LONG_CLICK = "onLongClick";
 
-    private boolean clickListener(
-            final String type, final Method m, final View v) {
+    // String key = actName + ":" + view id + ":" + methodType;
+    // In my case at least this should save me memory and make the
+    // app run a bit faster.  I expect only 2 or 3 methods for each
+    // activity.  However, there will be 1 or 2 entries for each button.
+    // I may need to revisit this??
+    private static final HashMap<String, Method> methodCache = new HashMap<>();
+
+    private boolean clickListener(final String type, final View v) {
         boolean rv = false;
         Object receiver = v.getContext();
         if (receiver instanceof ContextWrapper) {
             receiver = ((ContextWrapper)receiver)
                 .getBaseContext();
         }
+        // calculate our key.
+        @SuppressWarnings("ConstantConditions")
+        String key = ((Activity)receiver).getClass().getSimpleName()
+                + ":" + v.getId() + ":" + type;
+        Method method = methodCache.get(key);
         //noinspection TryWithIdenticalCatches
         try {
             if (type.equals(SHORT_CLICK)) {
-                m.invoke(receiver, v);
+                method.invoke(receiver, v);
             }
             else {
                 audioManager.playSoundEffect(AudioManager.FX_KEY_CLICK);
-                rv = (boolean)m.invoke(receiver, v);
+                rv = (boolean)method.invoke(receiver, v);
             }
         } catch (IllegalAccessException e) {
             e.printStackTrace();
@@ -76,38 +89,13 @@ public class CustomButton extends AppCompatButton {
         return rv;
     }
 
-    // method contains complete method signature including return type, arguments, class and
-    // method name.  Assuming there are many more methods than buttons we should be able
-    // to speed up the app and reduce our memory footprint by caching the method.
-    private static final HashMap<Method,OnClickListener> onClickCache = new HashMap<>();
-    private static final HashMap<Method,OnLongClickListener> onLongClickCache = new HashMap<>();
-
-    private OnClickListener getOnClickListener (final Method method) {
-        OnClickListener listener = onClickCache.get(method);
-        if (null == listener) {
-            listener = new OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                clickListener(SHORT_CLICK, method, v);
-            }
-            };
-            onClickCache.put(method, listener);
-        }
-        return listener;
+    @Override
+    public void onClick(View v) {
+        clickListener(SHORT_CLICK, v);
     }
-
-    private OnLongClickListener getOnLongClickListener (final Method method) {
-        OnLongClickListener listener = onLongClickCache.get(method);
-        if (null == listener) {
-            listener = new OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                    return clickListener(LONG_CLICK, method, v);
-                }
-            };
-        }
-        onLongClickCache.put(method, listener);
-        return listener;
+    @Override
+    public boolean onLongClick(View v) {
+        return clickListener(LONG_CLICK, v);
     }
 
     /******************************************************************
@@ -190,12 +178,14 @@ public class CustomButton extends AppCompatButton {
             // class so our onClick listeners will get called.
             if (methodType.equals(SHORT_CLICK)) {
                 Log.w(TAG, String.format("onClick id:0x%04x", buttonId));
-                setOnClickListener(getOnClickListener(method));
+                setOnClickListener(this);
             }
             else  {
                 Log.w(TAG, String.format("onLongClick id:0x%04x", buttonId));
-                setOnLongClickListener(getOnLongClickListener(method));
+                setOnLongClickListener(this);
             }
+            String key = actName + ":" + this.getId() + ":" + methodType;
+            methodCache.put(key, method);
         }
         customButtonAttrs.recycle();
     }
