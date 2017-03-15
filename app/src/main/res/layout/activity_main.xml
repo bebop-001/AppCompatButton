@@ -30,7 +30,7 @@
         android:textStyle="bold"
         />
 
-    <com.kana_tutor.buttonshortlongclickdemo.CustomButton
+    <com.kana_tutor.custombutton.CustomButton
         android:id="@+id/button_1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -40,7 +40,7 @@
         custom:onClick="onClick_1"
         custom:onLongClick="longClick_1"
         tools:ignore="HardcodedText" />
-    <com.kana_tutor.buttonshortlongclickdemo.CustomButton
+    <com.kana_tutor.custombutton.CustomButton
         android:id="@+id/button_2"
         android:background="#80ffffff"
         android:layout_width="match_parent"
@@ -50,7 +50,7 @@
         custom:onClick="onClick_2"
         custom:onLongClick="longClick_2"
         tools:ignore="HardcodedText" />
-    <com.kana_tutor.buttonshortlongclickdemo.CustomButton
+    <com.kana_tutor.custombutton.CustomButton
         android:id="@+id/button_3"
         android:background="#80ffffff"
         android:layout_margin="10dp"
