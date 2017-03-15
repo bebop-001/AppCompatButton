@@ -28,6 +28,7 @@ import android.view.View;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.HashMap;
 
 
 /*
@@ -74,23 +75,39 @@ public class CustomButton extends AppCompatButton {
         }
         return rv;
     }
+
+    // method contains complete method signature including return type, arguments, class and
+    // method name.  Assuming there are many more methods than buttons we should be able
+    // to speed up the app and reduce our memory footprint by caching the method.
+    private static final HashMap<Method,OnClickListener> onClickCache = new HashMap<>();
+    private static final HashMap<Method,OnLongClickListener> onLongClickCache = new HashMap<>();
+
     private OnClickListener getOnClickListener (final Method method) {
-        return new OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        OnClickListener listener = onClickCache.get(method);
+        if (null == listener) {
+            listener = new OnClickListener() {
+                @Override
+                public void onClick(View v) {
                 clickListener(SHORT_CLICK, method, v);
             }
-        };
+            };
+            onClickCache.put(method, listener);
+        }
+        return listener;
     }
 
     private OnLongClickListener getOnLongClickListener (final Method method) {
-        return new OnLongClickListener() {
-            @SuppressWarnings("TryWithIdenticalCatches")
+        OnLongClickListener listener = onLongClickCache.get(method);
+        if (null == listener) {
+            listener = new OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                return clickListener(LONG_CLICK, method, v);
-            }
-        };
+                    return clickListener(LONG_CLICK, method, v);
+                }
+            };
+        }
+        onLongClickCache.put(method, listener);
+        return listener;
     }
 
     /******************************************************************
